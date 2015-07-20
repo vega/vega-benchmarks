@@ -1,0 +1,83 @@
+<html>
+  <head>
+    <title>Vega 1 Streaming Scatterplot Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/vega1.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/tasks.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+
+  <script>
+    var spec = {
+      "width": 500,
+      "height": 500,
+      "padding": "strict",
+
+      "data": [{"name": "table"}],
+      "scales": [
+        {
+          "name": "x",
+          "nice": true,
+          "range": "width",
+          "domain": {"data": "table", "field": "data.x"}
+        },
+        {
+          "name": "y",
+          "nice": true,
+          "range": "height",
+          "domain": {"data": "table", "field": "data.y"}
+        },
+        {
+          "name": "c",
+          "type": "ordinal",
+          "domain": {"data": "table", "field": "data.c"},
+          "range": ["#800", "#080", "#008"]
+        }
+      ],
+
+      "axes": [
+        {"type": "x", "scale": "x"},
+        {"type": "y", "scale": "y"}
+      ],
+
+      "marks": [
+        {
+          "type": "symbol",
+          "from": {"data": "table"},
+          "properties": {
+            "update": {
+              "x": {"scale": "x", "field": "data.x"},
+              "y": {"scale": "y", "field": "data.y"},
+              "fill": {"scale": "c", "field": "data.c"},
+              "fillOpacity": {"value": 0.5},
+              "size": {"value": 40}
+            }
+          }
+        }
+      ]
+    };
+
+    var ops = tasks.batchStreaming,
+        gen = generators.scatter,
+        data = gen(),
+        view = null;
+
+    function init(cb) {
+      vg.parse.spec(spec, function(chart) {
+        view = chart({ el: '#vis', renderer: params.renderer });
+        cb();
+      })
+    }
+
+    function update() {
+      view.data({ table: data })
+        .update();
+    }
+  </script>
+</html>

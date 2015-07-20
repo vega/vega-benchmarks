@@ -1,0 +1,25 @@
+{
+  "name": "vega-benchmarks",
+  "version": "1.0.0",
+  "description": "Scripts to benchmark Vega's performance.",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/vega/vega-benchmarks.git"
+  },
+  "author": {
+    "name": "Arvind Satyanarayan",
+    "url": "http://arvindsatya.com"
+  },
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "devDependencies": {
+    "chromedriver": "^2.14.1",
+    "node-http-server": "^3.0.0",
+    "selenium-server-standalone-jar": "^2.45.0",
+    "webdriverio": "^3.1.0",
+    "yargs": "^3.15.0"
+  },
+  "scripts": {
+    "start": "java -jar ./node_modules/selenium-server-standalone-jar/jar/selenium-server-standalone-2.45.0.jar -Dwebdriver.chrome.driver=\"node_modules/chromedriver/bin/chromedriver\""
+  }
+}

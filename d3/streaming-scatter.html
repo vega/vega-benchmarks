@@ -1,0 +1,97 @@
+<html>
+  <head>
+    <title>D3 Streaming Scatterplot Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/tasks.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+  </head>
+  <body>
+
+  </body>
+
+  <script>
+    var margin = {top: 20, right: 20, bottom: 30, left: 40},
+      width = 500 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom;
+
+    var xAcc, xScale, xAxis,
+        yAcc, yScale, yAxis,
+        cAcc, cScale,
+        svg, dot;
+
+    var ops = tasks.batchStreaming,
+        gen = generators.scatter,
+        data = gen();
+
+    function init(cb) {
+      xAcc   = function(d) { return d.x };
+      xScale = d3.scale.linear().range([0, width]);
+      xAxis  = d3.svg.axis().orient("bottom");
+
+      yAcc   = function(d) { return d.y };
+      yScale = d3.scale.linear().range([height, 0]);
+      yAxis  = d3.svg.axis().orient("left");
+
+      cAcc   = function(d) { return d.c };
+      cScale = d3.scale.ordinal().range(["#800", "#080", "#008"]);
+
+      svg = d3.select("body").append("svg")
+          .attr("width", width+margin.left+margin.right)
+          .attr("height", height+margin.top+margin.bottom)
+        .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // x-axis
+      svg.append("g")
+          .attr("class", "x_axis axis")
+          .attr("transform", "translate(0," + height + ")")
+        .append("text")
+          .attr("class", "title")
+          .attr("x", width)
+          .attr("y", -6)
+          .style("text-anchor", "end")
+          .text("Sepal Width");
+
+      // y-axis
+      svg.append("g")
+          .attr("class", "y_axis axis")
+        .append("text")
+          .attr("class", "title")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .text("Petal Length");
+
+      cb();
+    }
+
+    function update() {
+      xScale.domain([d3.min(data, xAcc), d3.max(data, xAcc)]);
+      xAxis.scale(xScale);
+      svg.select("g.x_axis").call(xAxis);
+
+      yScale.domain([d3.min(data, yAcc), d3.max(data, yAcc)]);
+      yAxis.scale(yScale);
+      svg.select("g.y_axis").call(yAxis);
+
+      // draw dots
+      dot = svg.selectAll(".dot")
+          .data(data);
+
+      dot.enter().append("circle")
+          .attr("class", "dot");
+
+      dot.attr("r", 3.5)
+        .attr("cx", function(d) { return xScale(xAcc(d)) })
+        .attr("cy", function(d) { return yScale(yAcc(d)) })
+        .style("fill", function(d) { return cScale(cAcc(d)) })
+        .style("opacity", 0.5);
+
+      dot.exit().remove();
+    }
+  </script>
+</html>

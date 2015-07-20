@@ -1,0 +1,105 @@
+<html>
+  <head>
+    <title>Vega 1 Streaming Parallel Coords Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/vega1.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/tasks.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+
+  <script>
+    var spec = {
+      "width": 960,
+      "height": 500,
+      "padding": "strict",
+
+      "data": [
+        {"name": "cars"},
+        {"name": "fields"}
+      ],
+      "scales": [
+        {
+          "name": "ord",
+          "type": "ordinal",
+          "range": "width", "points": true,
+          "domain": {"data": "fields", "field": "data"}
+        }
+      ],
+      "axes": [],
+      "marks": [
+        {
+          "type": "group",
+          "from": {"data": "cars"},
+          "marks": [
+            {
+              "type": "line",
+              "from": {"data": "fields"},
+              "properties": {
+                "update": {
+                  "x": {"scale": "ord", "field": "data"},
+                  "y": {"scale": {"field": "data"}, "group": "data", "field": "data"},
+                  "stroke": {"value": "steelblue"},
+                  "strokeWidth": {"value": 1},
+                  "strokeOpacity": {"value": 0.3}
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "from": {"data": "fields"},
+          "properties": {
+            "update": {
+              "x": {"scale": "ord", "field": "data", "offset":-8},
+              "y": {"group": "height", "offset": 6},
+              "fontWeight": {"value": "bold"},
+              "fill": {"value": "black"},
+              "text": {"field": "data"},
+              "align": {"value": "right"},
+              "baseline": {"value": "top"}
+            }
+          }
+        } 
+      ]
+    };
+
+    var ops = tasks.batchStreaming,
+        gen = generators.parallel_coords,
+        dimensions = gen.dims,
+        data = gen(),
+        view = null;
+
+    for (var i=0, dim; i<dimensions.length; ++i) {
+      dim = dimensions[i];
+      spec.scales.push({
+        "name": dim,
+        "range": "height", "zero": false, "nice": true,
+        "domain": {"data": "cars", "field": "data."+dim}
+      });
+      spec.axes.push({
+        "type": "y", "scale": dim, 
+        "offset": {"scale": "ord", "value": dim}
+      });
+    }
+    spec.data[1].values = dimensions;
+
+    function init(cb) {
+      vg.parse.spec(spec, function(chart) {
+        view = chart({ el: '#vis', renderer: params.renderer });
+        cb();
+      })
+    }
+
+    function update() {
+      view.data({ cars: data })
+        .update();
+    }
+  </script>
+</html>

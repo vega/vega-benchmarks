@@ -7,8 +7,8 @@ var generators = (function() {
     for (var i=0; i<n; ++i) {
       out.push({
         c: "c" + ~~(c*(i/n)),
-        x: c * Math.random(),
-        y: c * Math.random()
+        x: ~~(c * Math.random()),
+        y: ~~(c * Math.random())
       });
     }
     return out;   
@@ -24,7 +24,7 @@ var generators = (function() {
       }));
 
       for (j=0; j<pcp.dims.length; ++j) {
-        o[pcp.dims[j]] = c * Math.random();
+        o[pcp.dims[j]] = ~~(c * Math.random());
       }
     }
     return out;

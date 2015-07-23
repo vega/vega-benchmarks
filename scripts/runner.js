@@ -19,6 +19,9 @@ if (!window.params) {
   params.benchmark = params.benchmark || "insert";
 }
 
+// Disable retina rendering on canvas (vg2 only).
+if (window.vg) window.vg.config.render.retina = false;
+
 var benchmark = (function() {
   var lib = params.lib,
       op  = params.benchmark,

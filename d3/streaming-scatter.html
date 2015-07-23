@@ -13,9 +13,9 @@
   </body>
 
   <script>
-    var margin = {top: 20, right: 20, bottom: 30, left: 40},
-      width = 500 - margin.left - margin.right,
-      height = 500 - margin.top - margin.bottom;
+    var margin = {top: 10, left: 30, bottom: 30, right: 10},
+      width = 540 - margin.left - margin.right,
+      height = 540 - margin.top - margin.bottom;
 
     var xAcc, xScale, xAxis,
         yAcc, yScale, yAxis,
@@ -47,24 +47,11 @@
       // x-axis
       svg.append("g")
           .attr("class", "x_axis axis")
-          .attr("transform", "translate(0," + height + ")")
-        .append("text")
-          .attr("class", "title")
-          .attr("x", width)
-          .attr("y", -6)
-          .style("text-anchor", "end")
-          .text("Sepal Width");
+          .attr("transform", "translate(0," + height + ")");
 
       // y-axis
       svg.append("g")
-          .attr("class", "y_axis axis")
-        .append("text")
-          .attr("class", "title")
-          .attr("transform", "rotate(-90)")
-          .attr("y", 6)
-          .attr("dy", ".71em")
-          .style("text-anchor", "end")
-          .text("Petal Length");
+          .attr("class", "y_axis axis");
 
       cb();
     }

@@ -1,0 +1,140 @@
+<html>
+  <head>
+    <title>D3 Streaming Trellis Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/tasks.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+  </head>
+  <body>
+
+  </body>
+
+  <script>
+    var margin = {left: 96, top: 0, right: 13, bottom: 27},
+        width  = 309 - margin.left - margin.right,
+        height = 747 - margin.top  - margin.bottom; 
+
+    var g, x, y, c,
+        xAxis, yAxis,
+        variety, site, siteData,
+        svg;
+
+    var ops = tasks.batchStreaming,
+        gen = generators.trellis,
+        data = gen();
+
+    function init(cb) {
+      g = d3.scale.ordinal();
+      c = d3.scale.category10();
+      x = d3.scale.linear();
+      y = d3.scale.ordinal();
+
+      xAxis = d3.svg.axis().orient("bottom");
+      yAxis = d3.svg.axis().orient("left");
+
+      svg = d3.select("body").append("svg")
+          .attr("width", width+margin.left+margin.right)
+          .attr("height", height+margin.top+margin.bottom)
+        .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      cb();
+    }
+
+    function update() {
+      variety = d3.nest()
+        .key(function(d) { return d.variety; })
+        .rollup(function(leaves) { return d3.median(leaves, function(d) { return d.yield }); })
+        .entries(data)
+        .sort(function(a, b) { return b.values - a.values });
+
+      site = d3.nest()
+        .key(function(d) { return d.site; })
+        .rollup(function(leaves) { return d3.median(leaves, function(d) { return d.yield }); })
+        .entries(data)
+        .sort(function(a, b) { return a.values - b.values });
+
+      siteData = d3.nest()
+        .key(function(d) { return d.site; })
+        .map(data, d3.map);
+
+      g.domain(site.map(function(d) { return d.key }))
+        .rangeBands([height, 0], 0.15);
+
+      x.domain([0, d3.max(data.map(function(d) { return d.yield }))])
+        .range([0, width]);
+
+      y.domain(variety.map(function(d) { return d.key }))
+        .rangePoints([0, g.rangeBand()], 1.2);
+
+      c.domain(data.map(function(d) { return d.year }));
+
+      xAxis.scale(x);
+      yAxis.scale(y).tickSize(0);
+
+      var groups = svg.selectAll(".cell")
+        .data(site, function(d) { return d.key; });
+
+      groups.enter().append("g")
+        .attr('class', 'cell');
+
+      groups
+        .attr("width", width)
+        .attr("height", g.rangeBand())
+        .attr("transform", function(d) { return "translate(0.5,"+g(d.key)+")" });
+
+      groups.each(multiple);
+      groups.exit().remove();
+    }
+
+    function multiple(site, i) {
+      var group = d3.select(this);
+
+      var rect = group.select("rect"),
+          label = group.select("text.title");
+
+      if(rect.empty()) {
+        rect = group.append("rect");
+        label = group.append("text").attr("class", "title");
+        group.append("g").attr("class", "x axis")
+        group.append("g").attr("class", "y axis");
+      }
+
+      rect.attr("x", 0)
+        .attr("width", width)
+        .attr("height", g.rangeBand())
+        .attr("fill", "white")
+        .attr("stroke", "#ccc")
+        .attr("stroke-width", 2);
+
+      label.text(site.key)
+        .attr("x", width/2)
+        .attr("y", -3)
+        .style("fill", "#000")
+        .style("font-weight", "bold")
+        .style("text-anchor", "middle");
+
+      group.select(".y.axis").call(yAxis);
+      if(i == 0) group.select(".x.axis").call(xAxis);
+      group.select(".x.axis").attr("transform", "translate(0,"+(g.rangeBand()+20)+")");
+
+      var data = siteData.get(site.key);
+      var points = group.selectAll(".point")
+        .data(data);
+
+      points.enter().append("circle")
+        .attr("class", "point");
+
+      points.attr("cx", function(d) { return x(d.yield) })
+        .attr("cy", function(d) { return y(d.variety) })
+        .attr("r", 4)
+        .style("fill", "transparent")
+        .style("stroke", function(d) { return c(d.year) })
+        .style("stroke-width", "2px");
+
+    }
+  </script>
+</html>

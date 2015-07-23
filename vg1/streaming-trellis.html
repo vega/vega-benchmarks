@@ -1,0 +1,158 @@
+<html>
+  <head>
+    <title>Vega 1 Streaming Scatterplot Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/vega1.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/tasks.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+
+  <script>
+    var spec = {
+      "width": 200,
+      "height": 720,
+      "padding": {"left": 96, "top": 0, "right": 13, "bottom": 27},
+      "data": [
+        {
+          "name": "barley"
+        },
+        {
+          "name": "variety",
+          "source": "barley",
+          "transform": [
+            {
+              "type": "aggregate", 
+              "groupby": ["data.variety"], 
+              "fields": [{"field": "data.yield", "op": "median"}]
+            },
+            {"type": "sort", "by": "-data.median_yield"}
+          ]
+        },
+        {
+          "name": "site",
+          "source": "barley",
+          "transform": [
+            {
+              "type": "aggregate", 
+              "groupby": ["data.site"], 
+              "fields": [{"field": "data.yield", "op": "median"}]
+            },
+            {"type": "sort", "by": "-data.median_yield"}
+          ]
+        }
+      ],
+      "scales": [
+        {
+          "name": "g",
+          "type": "ordinal",
+          "range": "height",
+          "padding": 0.15,
+          "domain": {"data": "site", "field": "data.site"}
+        },
+        {
+          "name": "x",
+          "type": "linear",
+          "nice": true,
+          "range": "width",
+          "domain": {"data": "barley", "field": "data.yield"}
+        },
+        {
+          "name": "c",
+          "type": "ordinal",
+          "range": "category10"
+        }
+      ],
+      "axes": [
+        {"type": "x", "scale": "x", "offset": -12}
+      ],
+      "marks": [
+        {
+          "type": "text",
+          "from": {"data": "site"},
+          "properties": {
+            "update": {
+              "x": {"group": "width", "mult": 0.5},
+              "y": {"scale": "g", "field": "data.site", "offset": -2},
+              "fontWeight": {"value": "bold"},
+              "text": {"field": "data.site"},
+              "align": {"value": "center"},
+              "baseline": {"value": "bottom"},
+              "fill": {"value": "#000"}
+            }
+          }
+        },
+        {
+          "type": "group",
+          "from": {
+            "data": "barley",
+            "transform": [{"type": "facet", "keys": ["data.site"]}]
+          },
+          "scales": [
+            {
+              "name": "y",
+              "type": "ordinal",
+              "range": "height",
+              "points": true,
+              "padding": 1.2,
+              "domain": {"data": "variety", "field": "data.variety"}
+            }
+          ],
+          "axes": [
+            {
+              "type": "y",
+              "scale": "y",
+              "tickSize": 0,
+              "properties": {"axis": {"stroke": {"value": "transparent"}}}
+            }
+          ],
+          "properties": {
+            "update": {
+              "x": {"value": 0.5},
+              "y": {"scale": "g", "field": "key"},
+              "height": {"scale": "g", "band": true},
+              "width": {"group": "width"},
+              "stroke": {"value": "#ccc"}
+            }
+          },
+          "marks": [
+            {
+              "type": "symbol",
+              "properties": {
+                "update": {
+                  "x": {"scale": "x", "field": "data.yield"},
+                  "y": {"scale": "y", "field": "data.variety"},
+                  "size": {"value": 50},
+                  "stroke": {"scale": "c", "field": "data.year"},
+                  "strokeWidth": {"value": 2}
+                }
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    var ops = tasks.batchStreaming,
+        gen = generators.trellis,
+        data = gen(),
+        view = null;
+
+    function init(cb) {
+      vg.parse.spec(spec, function(chart) {
+        view = chart({ el: '#vis', renderer: params.renderer });
+        cb();
+      })
+    }
+
+    function update() {
+      view.data({ barley: data })
+        .update();
+    }
+  </script>
+</html>

@@ -31,8 +31,24 @@ var generators = (function() {
   }
   pcp.dims = Array.apply(null, Array(7)).map(function(d, i) { return "d"+i; });
 
+  function trellis(n, c) {
+    var out = [];
+    if (!n) n = params.N;
+    if (!c) c = params.C;
+    for (var i=0; i<n; ++i) {
+      out.push({
+        variety: "v" + ~~((c/5) * Math.random()), 
+        site: "s" + ~~((c/10) * Math.random()),
+        year: ~~(2 * Math.random()),
+        yield: ~~(c * Math.random())
+      });
+    }
+    return out;
+  }
+
   return {
     scatter: scatter,
-    parallel_coords: pcp
+    parallel_coords: pcp,
+    trellis: trellis
   };
 })();

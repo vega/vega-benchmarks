@@ -10,10 +10,11 @@ if (!window.params) {
       a[b[0]] = b[1]; return a;
     }, {});
 
-  params.R = +params.R || 1;
-  params.N = +params.N || 100;
-  params.C = +params.C || 50;
-  params.P = +params.P || 0.01;
+  params.N = +params.N || 100;  // Number of data tuples.
+  params.C = +params.C || 50;   // Number of data categories.
+  params.P = +params.P || 0.01; // % of data tuples to stream.
+  params.R = +params.R || 1;    // Number of repetitions to perform.
+  params.benchmark = params.benchmark || null; // Benchmark operation.
   params.lib = lib;
   params.renderer = lib === "d3" ? "svg" : (params.renderer || "canvas");
 }
@@ -79,13 +80,10 @@ var benchmark = (function() {
   }
 
   function log(results, op, t) {
-    results.push({
-      key: params.lib+" "+op,
-      lib: params.lib,
-      op:  op,
-      renderer: params.renderer,
+    results.push(dl.extend({}, params, {
+      op: op,
       time: Date.now() - t
-    });
+    }));
   }
 
   function run(results, done) {

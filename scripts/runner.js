@@ -16,11 +16,15 @@ if (!window.params) {
   params.P = +params.P || 0.01;
   params.lib = lib;
   params.renderer = lib === "d3" ? "svg" : (params.renderer || "canvas");
-  params.benchmark = params.benchmark || "insert";
 }
 
 // Disable retina rendering on canvas (vg2 only).
 if (window.vg) window.vg.config.render.retina = false;
+
+// If no benchmark, init and render the visualization once
+window.onload = function() {
+  if (!params.benchmark) init(function() { update(); });
+};
 
 var benchmark = (function() {
   var lib = params.lib,

@@ -5,8 +5,8 @@
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/vega2.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/tasks.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
   <body>
@@ -129,8 +129,7 @@
       ]
     };
 
-    var ops  = tasks.streaming,
-        gen  = generators.trellis,
+    var gen  = generators.trellis,
         vals = [],
         view = null,
         data = null;

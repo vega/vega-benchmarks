@@ -4,8 +4,8 @@
     <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/tasks.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
   <body>
@@ -20,8 +20,7 @@
     var x, y, line, axes, 
         svg;
 
-    var ops = tasks.batchStreaming,
-        gen = generators.parallel_coords,
+    var gen = generators.parallel_coords,
         data = gen(),
         dimensions = gen.dims;
 

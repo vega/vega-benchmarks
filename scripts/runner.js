@@ -27,7 +27,7 @@ window.onload = function() {
   if (!params.benchmark) init(function() { update(); });
 };
 
-var benchmark = (function() {
+var run = (function() {
   var lib = params.lib,
       op  = params.benchmark,
       R = params.R,
@@ -86,40 +86,47 @@ var benchmark = (function() {
     }));
   }
 
-  function run(results, done) {
-    d3.timer(function() {
-      if (s === 0) {
-        t = Date.now();
-        init(function() { ++s; });
-      } else if (s === 1) {
-        log(results, "parsed", t);
-        t = Date.now();
-        update();
-        ++s;
-      } else if (s === 2) {
-        log(results, "rendered", t);
-        t = null;
-        if (window.view) {
-          if (vg.version.match(/1.5/)) {
-            shimVg1View(window.view, results);
-          } else if (vg.version.match(/2.0/)) {
-            shimVg2View(window.view, results);
+  return function(results, done) {
+    t = Date.now();
+    init(function() {
+      log(results, "parsed", t);
+      d3.timer(function() {
+        if (s === 0) {
+          t = Date.now();
+          update();
+          ++s;
+        } else if (s === 1) {
+          log(results, "rendered", t);
+          t = null;
+          if (window.view) {
+            if (vg.version.match(/1.5/)) {
+              shimVg1View(window.view, results);
+            } else if (vg.version.match(/2.0/)) {
+              shimVg2View(window.view, results);
+            }
           }
+          ++s;
+        } else if (s <= R+1) {
+          if (t) log(results, op, t);
+          if (benchmarks.rerender) {
+            // For benchmark suites that require re-rendering, we measure
+            // the time for the re-render (rather than the benchmark op).
+            benchmarks[op](s);
+            t = Date.now();
+            update();
+            log(results, op+" update returned", t);
+            ++s;
+          } else {
+            // Otherwise, we measure the time taken by the benchmark op itself.
+            t = Date.now();
+            benchmarks[op](s);
+            ++s;
+          }
+        } else {
+          log(results, op, t);
+          return (done(results), true);
         }
-        ++s;
-      } else if (s <= R+2) {
-        if (t) log(results, op, t);
-        ops[op]();
-        t = Date.now();
-        update();
-        log(results, op+" update returned", t);
-        ++s;
-      } else {
-        log(results, op, t);
-        return (done(results), true);
-      }
+      });
     });
   }
-
-  return run;
 })();

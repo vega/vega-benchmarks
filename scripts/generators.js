@@ -41,10 +41,24 @@ var generators = (function() {
     return out;
   }
 
+  function sp500(n, c) {
+    var out = [];
+    if (!n) n = params.N;
+    if (!c) c = params.C;
+    for (var i=0, t = Date.now(); i<n; ++i) {
+      out.push({
+        date: t + (i * 1000 * 60 * 60 * 24),
+        price: c * Math.random()
+      });
+    }
+    return out;
+  }
+
   return {
     scatter: generate(['x', 'y']),
     parallel_coords: generate(7),
     trellis: trellis,
-    splom: generate(4)
+    splom: generate(4),
+    sp500: sp500
   };
 })();

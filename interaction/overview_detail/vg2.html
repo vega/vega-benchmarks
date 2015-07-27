@@ -1,0 +1,208 @@
+<html>
+  <head>
+    <title>Vega 2 Overview + Detail Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/vega2.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+
+  <script>
+    var spec = {
+      "width": 720,
+      "height": 480,
+      "padding": {"left": 43, "top": 12, "right": 8, "bottom": 47},
+
+      "signals": [
+        {
+          "name": "brush_start",
+          "streams": [{
+            "type": "@overview:mousedown", 
+            "expr": "eventX()", 
+            "scale": {"name": "xOverview", "invert": true}
+          }]
+        },
+        {
+          "name": "brush_end",
+          "streams": [{
+            "type": "@overview:mousedown, [@overview:mousedown, window:mouseup] > window:mousemove",
+            "expr": "clamp(eventX(), 0, 720)",
+            "scale": {"name": "xOverview", "invert": true}
+          }]
+        },
+        {
+          "name": "min_date", 
+          "init": {"expr": "datetime('Jan 1 2000')"},
+          "expr": "time(brush_start) === time(brush_end) ? datetime('Jan 1 2000') : min(brush_start, brush_end)"
+        },
+        {
+          "name": "max_date", 
+          "init": {"expr": "datetime('Mar 1 2010')"},
+          "expr": "time(brush_start) === time(brush_end) ? datetime('Mar 1 2010') : max(brush_start, brush_end)"
+        }
+      ],
+
+      "data": [
+        {
+          "name": "sp500", 
+          "format": {"parse": {"price": "number", "date": "date"}}
+        }
+      ],
+
+      "scales": [
+        {
+          "name": "xOverview",
+          "type": "time",
+          "range": [0, 720],
+          "domain": {"data": "sp500", "field": "date"}
+        },
+        {
+          "name": "yOverview",
+          "type": "linear",
+          "range": [70, 0],
+          "nice": true,
+          "domain": {"data": "sp500", "field": "price"}
+        },
+        {
+          "name": "xDetail",
+          "type": "time",
+          "range": [0, 720],
+          "domainMin": {"signal": "min_date"},
+          "domainMax": {"signal": "max_date"}
+        },
+        {
+          "name": "yDetail",
+          "type": "linear",
+          "range": [390, 0],
+          "nice": true,
+          "domain": {"data": "sp500", "field": "price"}
+        }
+      ],
+
+      "marks": [
+        {
+          "type": "group",
+          "name": "detail",
+          "properties": {
+            "enter": {
+              "height": {"value": 390},
+              "width": {"value": 720}
+            }
+          },
+          "axes": [
+            {"type": "x", "scale": "xDetail"},
+            {"type": "y", "scale": "yDetail"}
+          ],
+          "marks": [
+            {
+              "type": "group",
+              "properties": {
+                "enter": {
+                  "height": {"field": {"group": "height"}},
+                  "width": {"field": {"group": "width"}},
+                  "clip": {"value": true}
+                }
+              },
+              "marks": [
+                {
+                  "type": "area",
+                  "from": {"data": "sp500"},
+                  "properties": {
+                    "update": {
+                      "x": {"scale": "xDetail", "field": "date"},
+                      "y": {"scale": "yDetail", "field": "price"},
+                      "y2": {"scale": "yDetail", "value": 0},
+                      "fill": {"value": "steelblue"}
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "type": "group",
+          "name": "overview",
+          "properties": {
+            "enter": {
+              "x": {"value": 0},
+              "y": {"value": 430},
+              "height": {"value": 70},
+              "width": {"value": 720},
+              "fill": {"value": "#fff"}
+            }
+          },
+          "axes": [
+            {"type": "x", "scale": "xOverview"}
+          ],
+          "marks": [
+            {
+              "type": "area",
+              "from": {"data": "sp500"},
+              "properties": {
+                "update": {
+                  "x": {"scale": "xOverview", "field": "date"},
+                  "y": {"scale": "yOverview", "field": "price"},
+                  "y2": {"scale": "yOverview", "value": 0},
+                  "fill": {"value": "steelblue"}
+                }
+              }
+            },
+            {
+              "type": "rect",
+              "properties":{
+                "enter":{
+                  "y": {"value": 0},
+                  "height": {"value":70},
+                  "fill": {"value": "#333"},
+                  "fillOpacity": {"value":0.2}
+                },
+                "update":{
+                  "x": {"scale": "xOverview", "signal": "brush_start"},
+                  "x2": {"scale": "xOverview", "signal": "brush_end"}
+                }
+              }
+            }
+          ]
+        }
+
+      ]
+    };
+
+    var gen  = generators.sp500,
+        vals = [],
+        view = null,
+        data = null;
+
+    function init(cb) {
+      vg.parse.spec(spec, function(chart) {
+        view = chart({ el: '#vis', renderer: params.renderer });
+        data = view.data('sp500');
+        cb();
+      })
+    }
+
+    function update() {
+      if (!vals.length) {
+        var d = gen();
+        data.insert(d);
+        view.signal("min_date", d[0].date);
+        view.signal("max_date", d[d.length-1].date);
+      }
+      view.update();
+      vals = data.values();
+
+      var elements = params.renderer === "canvas" ?
+        view.model().scene().items[0].items[1].items :
+        "g.overview > g > rect.background";
+      benchmarks.init(elements);
+    }
+  </script>
+</html>

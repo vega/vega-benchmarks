@@ -8,7 +8,7 @@
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
-  <body id="brushing_linking">
+  <body>
 
   </body>
 
@@ -43,7 +43,7 @@
       svg = d3.select("body").append("svg")
           .attr("width", size * n + padding)
           .attr("height", size * n + padding)
-          .attr("class", "marks")
+          .classed("marks", true)
         .append("g")
           .attr("transform", "translate(" + padding + "," + padding / 2 + ")");
 

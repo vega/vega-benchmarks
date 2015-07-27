@@ -1,0 +1,232 @@
+<html>
+  <head>
+    <title>Vega 2 Brushing & Linking Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/vega2.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+
+  <script>
+    var spec = {
+      "width": 600,
+      "height": 600,
+      "padding": {"left": 40, "top": 25, "right": 0, "bottom": 0},
+
+      "data": [
+        {"name": "iris"},
+        {"name": "fields"}
+      ],
+
+      "signals": [
+        {
+          "name": "cell",
+          "init": {},
+          "streams": [
+            {"type": "@cell:mousedown, @point:mousedown", "expr": "eventGroup()"}
+          ]
+        },
+        {
+          "name": "start",
+          "init": {"x": 0, "y": 0},
+          "streams": [{
+            "type": "@cell:mousedown, @point:mousedown", 
+            "expr": "{x: clamp(eventX(cell), 0, cell.width), y: clamp(eventY(cell), 0, cell.height)}"
+          }]
+        },
+        {
+          "name": "end",
+          "init": {"x": 0, "y": 0},
+          "streams": [{
+            "type": "@cell:mousedown, @point:mousedown, [(@cell:mousedown, @point:mousedown), window:mouseup] > window:mousemove",
+            "expr": "{x: clamp(eventX(cell), 0, cell.width), y: clamp(eventY(cell), 0, cell.height)}"
+          }]
+        },
+        {
+          "name": "brush",
+          "init": {"x1": 0, "y1": 0, "x2": 0, "y2": 0},
+          "streams": [{
+            "type": "start, end",
+            "expr": "{x1: cell.x + start.x, y1: cell.y + start.y, x2: cell.x + end.x, y2: cell.y + end.y}"
+          }]
+        }
+      ],
+
+      "predicates": [
+        {
+          "name": "xRange",
+          "type": "in",
+          "item": {"arg": "x"},
+          "range": [{"signal": "start.x"}, {"signal": "end.x"}],
+          "scale": {"name": "x", "invert": true, "scope": {"signal": "cell"}}
+        },
+
+        {
+          "name": "yRange",
+          "type": "in",
+          "item": {"arg": "y"},
+          "range": [{"signal": "start.y"}, {"signal": "end.y"}],
+          "scale": {"name": "y", "invert": true, "scope": {"signal": "cell"}}
+        },
+
+        {
+          "name": "inRange",
+          "type": "&&",
+          "operands": [
+            {"predicate": "xRange"},
+            {"predicate": "yRange"}
+          ]
+        }
+      ],
+
+      "scales": [
+        {
+          "name": "gx",
+          "type": "ordinal",
+          "range": "width",
+          "round": true,
+          "domain": {"data": "fields", "field": "data"}
+        },
+        {
+          "name": "gy",
+          "type": "ordinal",
+          "range": "height",
+          "round": true,
+          "reverse": true,
+          "domain": {"data": "fields", "field": "data"}
+        },
+        {
+          "name": "c",
+          "type": "ordinal",
+          "domain": {"data": "iris", "field": "c"},
+          "range": "category10"
+        }
+      ],
+
+      "marks": [
+        {
+          "name": "cell",
+          "type": "group",
+          "from": {
+            "data": "fields",
+            "transform": [{"type": "cross"}]
+          },
+          "properties": {
+            "enter": {
+              "a": {"field": "a.data"},
+              "b": {"field": "b.data"},
+              "x": {"scale": "gx", "field": "a.data"},
+              "y": {"scale": "gy", "field": "b.data"},
+              "width": {"scale": "gx", "band": true, "offset":-35},
+              "height": {"scale": "gy", "band": true, "offset":-35},
+              "fill": {"value": "#fff"},
+              "stroke": {"value": "#ddd"}
+            }
+          },
+          "scales": [
+            {
+              "name": "x",
+              "type": "linear",
+              "domain": {"data": "iris", "field": {"parent": "a.data"}},
+              "range": "width",
+              "zero": false,
+              "round": true
+            },
+            {
+              "name": "y",
+              "type": "linear",
+              "domain": {"data": "iris", "field": {"parent": "b.data"}},
+              "range": "height",
+              "zero": false,
+              "round": true
+            }
+          ],
+          "axes": [
+            {"type": "x", "scale": "x", "ticks": 5},
+            {"type": "y", "scale": "y", "ticks": 5}
+          ],
+          "marks": [
+            {
+              "name": "point",
+              "type": "symbol",
+              "from": {"data": "iris"},
+              "properties": {
+                "enter": {
+                  "x": {"scale": "x", "field": {"datum": {"parent": "a.data"}}},
+                  "y": {"scale": "y", "field": {"datum": {"parent": "b.data"}}},
+                  "fill": {"scale": "c", "field": "c"},
+                  "fillOpacity": {"value": 0.5},
+                  "size": {"value": 36}
+                },
+                "update": {
+                  "fill": {
+                    "rule": [
+                      {
+                        "predicate": {
+                          "name": "inRange",
+                          "x": {"field": {"datum": {"signal": "cell.a"}}},
+                          "y": {"field": {"datum": {"signal": "cell.b"}}}
+                        },
+
+                        "scale": "c", 
+                        "field": "c"
+                      },
+                      {"value": "grey"}
+                    ]
+                  }              
+                }
+              }
+            }
+          ]
+        },
+
+        {
+          "type": "rect",
+          "properties": {
+            "enter": {
+              "fill": {"value": "grey"},
+              "fillOpacity": {"value": 0.2}
+            },
+            "update": {
+              "x":  {"signal": "brush.x1"},
+              "y":  {"signal": "brush.y1"},
+              "x2": {"signal": "brush.x2"},
+              "y2": {"signal": "brush.y2"}
+            }
+          }
+        }
+      ]
+    };
+
+    var gen  = generators.splom,
+        vals = [],
+        view = null,
+        data = null;
+
+    spec.data[1].values = gen.dims;
+    function init(cb) {
+      vg.parse.spec(spec, function(chart) {
+        view = chart({ el: '#vis', renderer: params.renderer });
+        data = view.data('iris');
+        cb();
+      })
+    }
+
+    function update() {
+      if (!vals.length) data.insert(gen());
+      view.update();
+      vals = data.values();
+
+      var elements = params.renderer === "canvas" ?
+        view.model().scene().items[0].items[0].items :
+        "g.cell > g > rect.background";
+      benchmarks.init(elements);
+    }
+  </script>
+</html>

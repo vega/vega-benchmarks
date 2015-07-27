@@ -1,35 +1,30 @@
 var generators = (function() {
 
-  function scatter(n, c) {
-    var out = [];
-    if (!n) n = params.N;
-    if (!c) c = params.C;
-    for (var i=0; i<n; ++i) {
-      out.push({
-        c: "c" + ~~(c*(i/n)),
-        x: ~~(c * Math.random()),
-        y: ~~(c * Math.random())
-      });
-    }
-    return out;   
+  function dimensions(n) {
+    return Array.apply(null, Array(n)).map(function(d, i) { return "d"+i; });
   }
 
-  function pcp(n, c) {
-    var out = [], o, i, j;
-    if (!n) n = params.N;
-    if (!c) c = params.C; 
-    for (i=0; i<n; ++i) {
-      out.push((o={
-        c: "c" + ~~(c*(i/n))
-      }));
+  function generate(dims) {
+    if (dl.isNumber(dims)) dims = dimensions(dims);
 
-      for (j=0; j<pcp.dims.length; ++j) {
-        o[pcp.dims[j]] = ~~(c * Math.random());
+    function g(n, c) {
+      var out = [], o, i, j;
+      if (!n) n = params.N;
+      if (!c) c = params.C; 
+      for (i=0; i<n; ++i) {
+        out.push((o={
+          c: "c" + ~~(c*(i/n))
+        }));
+
+        for (j=0; j<dims.length; ++j) {
+          o[dims[j]] = ~~(c * Math.random());
+        }
       }
+      return out;   
     }
-    return out;
+
+    return (g.dims = dims, g);
   }
-  pcp.dims = Array.apply(null, Array(7)).map(function(d, i) { return "d"+i; });
 
   function trellis(n, c) {
     var out = [];
@@ -47,8 +42,9 @@ var generators = (function() {
   }
 
   return {
-    scatter: scatter,
-    parallel_coords: pcp,
-    trellis: trellis
+    scatter: generate(['x', 'y']),
+    parallel_coords: generate(7),
+    trellis: trellis,
+    splom: generate(4)
   };
 })();

@@ -1,0 +1,209 @@
+<html>
+  <head>
+    <title>Vega 1 Brushing & Linking Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/vega1.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+
+  <script>
+    var spec = {
+      "width": 600,
+      "height": 600,
+      "padding": {"left": 40, "top": 25, "right": 0, "bottom": 0},
+
+      "data": [
+        {"name": "iris"},
+        {"name": "fields"},
+        {
+          "name": "brush",
+          "values": [{"xmin": 0, "xmax": 0, "ymin": 0, "ymax": 0}]
+        }
+      ],
+      "scales": [
+        {
+          "name": "gx",
+          "type": "ordinal",
+          "range": "width",
+          "round": true,
+          "domain": {"data": "fields", "field": "data"}
+        },
+        {
+          "name": "gy",
+          "type": "ordinal",
+          "range": "height",
+          "round": true,
+          "reverse": true,
+          "domain": {"data": "fields", "field": "data"}
+        },
+        {
+          "name": "c",
+          "type": "ordinal",
+          "domain": {"data": "iris", "field": "data.c"},
+          "range": ["#1f77b4", "#ff7f0e", "#2ca02c"]
+        }
+      ],
+      "marks": [
+        {
+          "name": "cell",
+          "type": "group",
+          "from": {
+            "data": "fields",
+            "transform": [{"type": "cross"}]
+          },
+          "properties": {
+            "enter": {
+              "x": {"scale": "gx", "field": "a.data"},
+              "y": {"scale": "gy", "field": "b.data"},
+              "width": {"scale": "gx", "band": true, "offset":-35},
+              "height": {"scale": "gy", "band": true, "offset":-35},
+              "fill": {"value": "#fff"},
+              "stroke": {"value": "#ddd"}
+            }
+          },
+          "scales": [
+            {
+              "name": "x",
+              "range": "width",
+              "zero": false,
+              "round": true,
+              "domain": {"data": "iris", "field": {"group": "a.data"}}
+            },
+            {
+              "name": "y",
+              "range": "height",
+              "zero": false,
+              "round": true,
+              "domain": {"data": "iris", "field": {"group": "b.data"}}
+            }
+          ],
+          "axes": [
+            {"type": "x", "scale": "x", "ticks": 5},
+            {"type": "y", "scale": "y", "ticks": 5}
+          ],
+          "marks": [
+            {
+              "type": "symbol",
+              "from": {"data": "iris"},
+              "properties": {
+                "enter": {
+                  "x": {"scale": "x", "field": {"group": "a.data"}},
+                  "y": {"scale": "y", "field": {"group": "b.data"}},
+                  "fill": {"scale": "c", "field": "data.c"},
+                  "fillOpacity": {"value": 0.5},
+                  "size": {"value": 36}
+                },
+                "update": {
+                  "fill": {"field": "data.color"}
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "rect",
+          "from": {"data": "brush"},
+          "properties": {
+            "update": {
+              "y": {"field": "data.ymin"},
+              "y2": {"field": "data.ymax"},
+              "x": {"field": "data.xmin"},
+              "x2": {"field": "data.xmax"},
+              "fill": {"value": "#333"},
+              "fillOpacity": {"value":0.2},
+              "stroke": {"value":"white"},
+              "strokeOpacity": {"value":0.5}
+            }
+          }
+        }
+      ]
+    };
+
+    var gen  = generators.splom,
+        view = null,
+        data = gen();
+
+    spec.data[1].values = gen.dims;
+    function init(cb) {
+      vg.parse.spec(spec, function(chart) {
+        view = chart({ el: '#vis', renderer: params.renderer });
+        cb();
+      })
+    }
+
+    function update() {
+      interactivity();
+
+      var elements = params.renderer === "canvas" ?
+        view.model().scene().items[0].items[0].items :
+        "g.cell > g > rect.background";
+      benchmarks.init(elements);
+    }
+
+    function interactivity() {
+      data = data.map(function(d) { return (d.color = "grey", d); });
+      view.data({ iris: data }).update();
+
+      var color = view.model().scene().items[0].scales.c,
+          pad  = view.padding(),
+          cell = null,
+          xStart, xEnd, yStart, yEnd;
+
+      view.on("mousedown", function(evt, item) {
+        if (item.mark.marktype === "symbol") {
+          cell = item.mark.group;
+        } else if (item.mark.marktype === "group" && item.mark.def.name === "cell") {
+          cell = item;
+        }
+
+        xStart = evt.pageX - pad.left - 5;
+        yStart = evt.pageY - pad.top - 5;
+
+        evt.preventDefault();
+      });
+
+      view.on("mouseup", function(evt, item) {
+        cell = null;
+      });
+
+      view.on("mousemove", function(evt, item) {
+        if (!cell) return;
+        xEnd = evt.pageX - pad.left;
+        yEnd = evt.pageY - pad.top;
+
+        var xMin = d3.min([xStart, xEnd]),
+            xMax = d3.max([xStart, xEnd]),
+            yMin = d3.min([yStart, yEnd]),
+            yMax = d3.max([yStart, yEnd]);
+
+        var xScale = cell.scales.x,
+            yScale = cell.scales.y,
+            xField = cell.datum.a.data,
+            yField = cell.datum.b.data,
+            dxMin  = xScale.invert(xMin - cell.x),
+            dxMax  = xScale.invert(xMax - cell.x),
+            dyMin  = yScale.invert(yMax - cell.y),
+            dyMax  = yScale.invert(yMin - cell.y);
+
+        data.map(function(d) {
+          d.color = (d[xField] >= dxMin && d[xField] <= dxMax && 
+            d[yField] >= dyMin && d[yField] <= dyMax) ? 
+              color(d.c) : "grey";          
+          return d;
+        });
+
+        view.data({ 
+          brush: [{"xmin": xMin, "xmax": xMax, "ymin": yMin, "ymax": yMax}],
+          iris: data
+        }).update();
+      });
+    }
+  </script>
+</html>

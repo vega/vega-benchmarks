@@ -27,7 +27,7 @@ var benchmarks = (function() {
     }
   }
 
-  function drag(s) {
+  function brush(s) {
     if (s % 2 === 0) {
       current = s % coords.length;
       randMouseEvt("mousedown");
@@ -36,7 +36,18 @@ var benchmarks = (function() {
     }
   }
 
-  return { init: init, drag: drag };
+  function panzoom(s) {
+    if (s % 3 === 0) {
+      randMouseEvt("mousedown");
+    } else if(s % 3 === 1) {
+      randMouseEvt("mouseup");
+    } else {
+      current = s % coords.length;
+      randMouseEvt("wheel");
+    }
+  }
+
+  return { init: init, brush: brush, panzoom: panzoom };
 
   // -- helper functions -----
 

@@ -1,0 +1,102 @@
+<html>
+  <head>
+    <title>D3 Panzoom Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
+  </head>
+  <body>
+
+  </body>
+
+  <script>
+    var width   = 800,
+        height  = 500,
+        padding = 50,
+        x, y, xAxis, yAxis, 
+        svg, zoom;
+
+    var gen = generators.scatter,
+        data = gen();
+
+    function init(cb) {
+      x = d3.scale.linear().range([0, width]);
+      y = d3.scale.linear().range([height, 0]);
+
+      xAxis = d3.svg.axis().orient("bottom").tickSize(-height);
+      yAxis = d3.svg.axis().orient("left").tickSize(-width);
+
+      svg = d3.select("body").append("svg")
+          .attr("width", width+2*padding)
+          .attr("height", height+2*padding)
+          .classed("marks", true)
+        .append("g")
+          .attr("transform", "translate(" + padding + "," + padding + ")");
+
+      zoom = d3.behavior.zoom()
+        .on("zoom", zoomed);
+
+      cb();
+    }
+
+    function update() {
+      x.domain([params.C/5*2, params.C/5*4]);
+      y.domain([params.C/5*2, params.C/5*4]);
+
+      xAxis.scale(x);
+      yAxis.scale(y);
+
+      zoom.x(x).y(y);
+      svg.call(zoom);
+
+      svg.append("defs").append("clipPath")
+          .attr("id", "clip")
+        .append("rect")
+          .attr("width", width)
+          .attr("height", height);
+
+      svg.append("rect")
+          .attr("width", width)
+          .attr("height", height)
+          .style("fill", "transparent");
+
+      svg.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + height + ")")
+          .call(xAxis);
+
+      svg.append("g")
+          .attr("class", "y axis")
+          .call(yAxis);  
+
+      svg.selectAll(".axis line")
+        .style("stroke-opacity", 0.125);
+
+      circles();
+    }
+
+    function zoomed() {
+      svg.select(".x.axis").call(xAxis);
+      svg.select(".y.axis").call(yAxis);
+      svg.selectAll(".axis line")
+        .style("stroke-opacity", 0.125);
+      circles();
+    }
+
+    function circles() {
+      var circle = svg.selectAll("circle")
+        .data(data);
+
+      circle.enter().append("circle");
+      circle.attr("cx", function(d) { return x(d.x); })
+        .attr("cy", function(d) { return y(d.y); })
+        .attr("r", 3.5)
+        .style("clip-path", "url(#clip)")
+        .style("fill", "steelblue");
+      circle.exit().remove();
+    }
+  </script>
+</html>

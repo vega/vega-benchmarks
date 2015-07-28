@@ -1,0 +1,163 @@
+<html>
+  <head>
+    <title>Vega 1 Panzoom Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/vega1.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+
+  <script>
+    var spec = {
+      "width": 800,
+      "height": 500,
+      "padding": 50,
+
+      "data": [
+        {
+          "name": "points"
+        },
+        {
+          "name": "xDomain",
+          "values": [params.C/5*2, params.C/5*4]
+        },
+        {
+          "name": "yDomain",
+          "values": [params.C/5*2, params.C/5*4]
+        }
+      ],
+
+      "scales": [
+        {
+          "name": "x",
+          "type": "linear",
+          "range": "width", "zero": false,
+          "domain": {"data": "xDomain", "field": "data"}
+        },
+        {
+          "name": "y",
+          "type": "linear",
+          "range": "height", "zero": false,
+          "domain": {"data": "yDomain", "field": "data"}
+        }
+      ],
+      "axes": [
+        {"type": "x", "scale": "x", "grid": true, "layer": "back"},
+        {"type": "y", "scale": "y", "grid": true, "layer": "back"}
+      ],
+      "marks": [
+        {
+          "name": "plot",
+          "type": "group",
+          "properties": {
+            "enter": {
+              "x": {"value": 0},
+              "width": {"group": "width"},
+              "y": {"value": 0},
+              "height": {"group": "height"},
+              "clip": {"value": true},
+              "fill": {"value": "transparent"},
+              "stroke": {"value": "#000"},
+              "strokeWidth": {"value": 2},
+              "clip": {"value": true}
+            }
+          },
+          "marks": [
+            {
+              "type": "symbol",
+              "from": {"data": "points"},
+              "properties": {
+                "update": {
+                  "x": {"scale": "x", "field": "data.x"},
+                  "y": {"scale": "y", "field": "data.y"},
+                  "fill": {"value": "steelblue"},
+                  "size": {"field": "data.size"}
+                }
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    var gen  = generators.scatter,
+        view = null,
+        data = gen();
+
+    function init(cb) {
+      vg.parse.spec(spec, function(chart) {
+        view = chart({ el: '#vis', renderer: params.renderer });
+        cb();
+      })
+    }
+
+    function update() {
+      interactivity();
+
+      var elements = params.renderer === "canvas" ?
+        view.model().scene().items[0].items[0].items :
+        "g.plot > g > rect.background";
+      benchmarks.init(elements);
+    }
+
+    function interactivity() {
+      view.data({ points: data }).update();
+
+      var width  = view.width(),
+          height = view.height(),
+          scene  = view.model().scene().items[0],
+          point, zoom, xs, ys, anchor;
+
+      view.on("mousedown", function(evt, item) {
+        point = {x: evt.pageX, y: evt.pageY};
+        xs = scene.scales.x.domain();
+        ys = scene.scales.y.domain();
+        evt.preventDefault();
+      });
+
+      view.on("mouseup", function(evt, item) {
+        point = null;
+      });
+
+      view.on("mousemove", function(evt, item) {
+        if (point) {
+          var delta = {x: point.x - evt.pageX, y: evt.pageY - point.y};
+          view.data({
+            xDomain: [xs[0] + (xs[1] - xs[0])*delta.x/width, 
+              xs[1] + (xs[1] - xs[0])*delta.x/width],
+
+            yDomain: [ys[0] + (ys[1] - ys[0])*delta.y/height,
+              ys[1] + (ys[1] - ys[0])*delta.y/height]
+          }).update();
+        }
+
+        anchor = {
+          x: scene.scales.x.invert(evt.pageX - 50),
+          y: scene.scales.y.invert(evt.pageY - 50)
+        };
+      });
+
+      view.on("wheel", function(evt, item) {
+        zoom = Math.pow(1.001, evt.deltaY);
+        xs = scene.scales.x.domain();
+        ys = scene.scales.y.domain();
+
+        view.data({
+          xDomain: [(xs[0]-anchor.x)*zoom + anchor.x,
+            (xs[1]-anchor.x)*zoom + anchor.x],
+
+          yDomain: [(ys[0]-anchor.y)*zoom + anchor.y,
+            (ys[1]-anchor.y)*zoom + anchor.y]
+        }).update();
+
+        evt.preventDefault();
+      });
+    }
+  </script>
+</html>

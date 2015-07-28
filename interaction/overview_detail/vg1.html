@@ -154,7 +154,6 @@
         view = null,
         data = gen();
 
-    spec.data[1].values = gen.dims;
     function init(cb) {
       vg.parse.spec(spec, function(chart) {
         view = chart({ el: '#vis', renderer: params.renderer });

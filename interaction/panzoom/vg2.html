@@ -1,0 +1,205 @@
+<html>
+  <head>
+    <title>Vega 2 Panzoom Benchmark</title>
+    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/lib/vega2.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
+    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
+    <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
+    <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+
+  <script>
+    var spec = {
+      "width": 800,
+      "height": 500,
+      "padding": 50,
+
+      "data": [
+        {
+          "name": "points"
+        }
+      ],
+
+      "signals": [
+        {"name": "width", "init": 800},
+        {"name": "height", "init": 500},
+        {
+          "name": "point",
+          "init": 0,
+          "streams": [{
+            "type": "mousedown",
+            "expr": "{x: eventX(), y: eventY()}"
+          }]
+        },
+        {
+          "name": "delta",
+          "init": 0,
+          "streams": [{
+            "type": "[mousedown, window:mouseup] > window:mousemove",
+            "expr": "{x: point.x - eventX(), y: eventY() - point.y}"
+          }]
+        },
+        {
+          "name": "xAnchor",
+          "init": 0,
+          "streams": [{
+            "type": "mousemove",
+            "expr": "eventX()",
+            "scale": {"name":"x", "invert":true}
+          }]
+        },
+        {
+          "name": "yAnchor",
+          "init": 0,
+          "streams": [{
+            "type": "mousemove",
+            "expr": "eventY()",
+            "scale": {"name":"y", "invert":true}
+          }]
+        },
+        {
+          "name": "zoom",
+          "init": 1.0,
+          "streams": [
+            {"type": "wheel", "expr": "pow(1.001, event.deltaY)"}
+          ]
+        },
+        {
+          "name": "xs",
+          "streams": [{
+            "type": "mousedown, mouseup, wheel",
+            "expr": "{min: xMin, max: xMax}"}
+          ]
+        },
+        {
+          "name": "ys",
+          "streams": [{
+            "type": "mousedown, mouseup, wheel",
+            "expr": "{min: yMin, max: yMax}"
+          }]
+        },
+        {
+          "name": "xMin",
+          "init": params.C/5*2,
+          "streams": [
+            {"type": "delta", "expr": "xs.min + (xs.max-xs.min)*delta.x/width"},
+            {"type": "zoom", "expr": "(xs.min-xAnchor)*zoom + xAnchor"}
+          ]
+        },
+        {
+          "name": "xMax",
+          "init": params.C/5*4,
+          "streams": [
+            {"type": "delta", "expr": "xs.max + (xs.max-xs.min)*delta.x/width"},
+            {"type": "zoom", "expr": "(xs.max-xAnchor)*zoom + xAnchor"}
+          ]
+        },
+        {
+          "name": "yMin",
+          "init": params.C/5*2,
+          "streams": [
+            {"type": "delta", "expr": "ys.min + (ys.max-ys.min)*delta.y/height"},
+            {"type": "zoom", "expr": "(ys.min-yAnchor)*zoom + yAnchor"}
+          ]
+        },
+        {
+          "name": "yMax",
+          "init": params.C/5*4,
+          "streams": [
+            {"type": "delta", "expr": "ys.max + (ys.max-ys.min)*delta.y/height"},
+            {"type": "zoom", "expr": "(ys.max-yAnchor)*zoom + yAnchor"}
+          ]
+        },
+        {
+          "name": "pointSize",
+          "init": 40,
+          "streams": [{
+            "type": "xMin",
+            "expr": "clamp(600/(xMax-xMin), 40, 100)"
+          }]
+        }
+      ],
+
+      "scales": [
+        {
+          "name": "x",
+          "type": "linear",
+          "range": "width", "zero": false,
+          "domainMin": {"signal": "xMin"},
+          "domainMax": {"signal": "xMax"}
+        },
+        {
+          "name": "y",
+          "type": "linear",
+          "range": "height", "zero": false,
+          "domainMin": {"signal": "yMin"},
+          "domainMax": {"signal": "yMax"}
+        }
+      ],
+      "axes": [
+        {"type": "x", "scale": "x", "grid": true, "layer": "back"},
+        {"type": "y", "scale": "y", "grid": true, "layer": "back"}
+      ],
+      "marks": [
+        {
+          "name": "plot",
+          "type": "group",
+          "properties": {
+            "enter": {
+              "x": {"value": 0},
+              "width": {"field": {"group": "width"}},
+              "y": {"value": 0},
+              "height": {"field": {"group": "height"}},
+              "stroke": {"value": "#000"},
+              "strokeWidth": {"value": 2},
+              "clip": {"value": true}
+            }
+          },
+          "marks": [
+            {
+              "type": "symbol",
+              "from": {"data": "points"},
+              "properties": {
+                "update": {
+                  "x": {"scale": "x", "field": "x"},
+                  "y": {"scale": "y", "field": "y"},
+                  "fill": {"value": "steelblue"},
+                  "size": {"signal": "pointSize"}
+                }
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    var gen  = generators.scatter,
+        vals = [],
+        view = null,
+        data = null;
+
+    function init(cb) {
+      vg.parse.spec(spec, function(chart) {
+        view = chart({ el: '#vis', renderer: params.renderer });
+        data = view.data('points');
+        cb();
+      })
+    }
+
+    function update() {
+      if (!vals.length) data.insert(gen());
+      view.update();
+      vals = data.values();
+
+      var elements = params.renderer === "canvas" ?
+        view.model().scene().items[0].items[0].items :
+        "g.plot > g > rect.background";
+      benchmarks.init(elements);
+    }
+  </script>
+</html>

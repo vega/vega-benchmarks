@@ -19,7 +19,7 @@ if (!window.params) {
   params.renderer = lib === "d3" ? "svg" : (params.renderer || "canvas");
 }
 
-// Disable retina rendering on canvas (vg2 only).
+// Disable retina rendering on canvas.
 if (window.vg) window.vg.config.render.retina = false;
 
 // If no benchmark, init and render the visualization once

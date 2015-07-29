@@ -177,7 +177,7 @@
           xStart, xEnd;
 
       view.on("mousedown", function(evt, item) {
-        if (item.mark.marktype === "area" || item.mark.marktype === "rect") {
+        if (item.mark.marktype === "line" || item.mark.marktype === "rect") {
           overview = item.mark.group;
         } else if (item.mark.marktype === "group" && item.mark.def.name === "overview") {
           overview = item;

@@ -127,12 +127,13 @@
       var points = group.selectAll(".point")
         .data(data);
 
-      points.enter().append("circle")
+      points.enter().append("rect")
         .attr("class", "point");
 
-      points.attr("cx", function(d) { return x(d.yield) })
-        .attr("cy", function(d) { return y[site.key](d.variety) })
-        .attr("r", 4)
+      points.attr("x", function(d) { return x(d.yield) })
+        .attr("y", function(d) { return y[site.key](d.variety) })
+        .attr("width", 7)
+        .attr("height", 7)
         .style("fill", "transparent")
         .style("stroke", function(d) { return c(d.year) })
         .style("stroke-width", "2px");

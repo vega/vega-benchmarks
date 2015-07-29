@@ -68,7 +68,10 @@ var benchmarks = (function() {
       evt.initMouseEvent(type, true, true, window, null, x, y, x, y, false, false, false, false, target);
     }
 
+    if (window.view) window.view._ts = Date.now();
     target.dispatchEvent(mm);
+
+    if (window.view) window.view._ts = Date.now();
     target.dispatchEvent(evt);    
   };
 

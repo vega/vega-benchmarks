@@ -91,7 +91,7 @@
           .attr("class", "area")
           .attr("d", area)
           .style("clip-path", "url(#clip)")
-          .style("fill", "steelblue");
+          .style("stroke", "steelblue");
 
       focus.append("g")
           .attr("class", "x axis")
@@ -106,7 +106,7 @@
           .datum(data)
           .attr("class", "area")
           .attr("d", area2)
-          .style("fill", "steelblue");
+          .style("stroke", "steelblue");
 
       context.append("g")
           .attr("class", "x axis")

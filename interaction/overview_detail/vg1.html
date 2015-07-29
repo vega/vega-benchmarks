@@ -86,14 +86,13 @@
 
               "marks": [
                 {
-                  "type": "area",
+                  "type": "line",
                   "from": {"data": "sp500"},
                   "properties": {
                     "update": {
                       "x": {"scale": "xDetail", "field": "data.date"},
                       "y": {"scale": "yDetail", "field": "data.price"},
-                      "y2": {"scale": "yDetail", "value": 0},
-                      "fill": {"value": "steelblue"}
+                      "stroke": {"value": "steelblue"}
                     }
                   }
                 }
@@ -118,14 +117,13 @@
           ],
           "marks": [
             {
-              "type": "area",
+              "type": "line",
               "from": {"data": "sp500"},
               "properties": {
                 "update": {
                   "x": {"scale": "xOverview", "field": "data.date"},
                   "y": {"scale": "yOverview", "field": "data.price"},
-                  "y2": {"scale": "yOverview", "value": 0},
-                  "fill": {"value": "steelblue"}
+                  "stroke": {"value": "steelblue"}
                 }
               }
             },
@@ -195,7 +193,7 @@
         if (!overview) return;
         xEnd = evt.pageX - pad.left;
         brush();
-        
+
         overview = null;
       });
 

@@ -163,13 +163,19 @@
           cell = item;
         }
 
-        xStart = evt.pageX - pad.left - 5;
-        yStart = evt.pageY - pad.top - 5;
+        xStart = xEnd = evt.pageX - pad.left - 5;
+        yStart = yEnd = evt.pageY - pad.top - 5;
+        brush();
 
         evt.preventDefault();
       });
 
       view.on("mouseup", function(evt, item) {
+        if (!cell) return;
+        xEnd = evt.pageX - pad.left;
+        yEnd = evt.pageY - pad.top;
+        brush();
+
         cell = null;
       });
 
@@ -177,7 +183,10 @@
         if (!cell) return;
         xEnd = evt.pageX - pad.left;
         yEnd = evt.pageY - pad.top;
+        brush();
+      });
 
+      function brush() {
         var xMin = d3.min([xStart, xEnd]),
             xMax = d3.max([xStart, xEnd]),
             yMin = d3.min([yStart, yEnd]),
@@ -203,7 +212,7 @@
           brush: [{"xmin": xMin, "xmax": xMax, "ymin": yMin, "ymax": yMax}],
           iris: data
         }).update();
-      });
+      }
     }
   </script>
 </html>

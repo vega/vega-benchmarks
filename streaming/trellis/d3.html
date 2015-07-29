@@ -17,8 +17,8 @@
         width  = 309 - margin.left - margin.right,
         height = 747 - margin.top  - margin.bottom; 
 
-    var g, x, y, c,
-        xAxis, yAxis,
+    var g, x, y = {}, c,
+        xAxis, yAxis = {},
         variety, site, siteData,
         svg;
 
@@ -29,10 +29,8 @@
       g = d3.scale.ordinal();
       c = d3.scale.category10();
       x = d3.scale.linear();
-      y = d3.scale.ordinal();
 
       xAxis = d3.svg.axis().orient("bottom");
-      yAxis = d3.svg.axis().orient("left");
 
       svg = d3.select("body").append("svg")
           .attr("width", width+margin.left+margin.right)
@@ -66,13 +64,9 @@
       x.domain([0, d3.max(data.map(function(d) { return d.yield }))])
         .range([0, width]);
 
-      y.domain(variety.map(function(d) { return d.key }))
-        .rangePoints([0, g.rangeBand()], 1.2);
-
       c.domain(data.map(function(d) { return d.year }));
 
       xAxis.scale(x);
-      yAxis.scale(y).tickSize(0);
 
       var groups = svg.selectAll(".cell")
         .data(site, function(d) { return d.key; });
@@ -95,12 +89,21 @@
       var rect = group.select("rect"),
           label = group.select("text.title");
 
-      if(rect.empty()) {
+      if (rect.empty()) {
         rect = group.append("rect");
         label = group.append("text").attr("class", "title");
         group.append("g").attr("class", "x axis")
         group.append("g").attr("class", "y axis");
       }
+
+      if (!y[site.key]) {
+        y[site.key] = d3.scale.ordinal();
+        yAxis[site.key] = d3.svg.axis().orient("left");
+      }
+
+      y[site.key].domain(variety.map(function(d) { return d.key }))
+        .rangePoints([0, g.rangeBand()], 1.2);
+      yAxis[site.key].scale(y[site.key]).tickSize(0);
 
       rect.attr("x", 0)
         .attr("width", width)
@@ -116,7 +119,7 @@
         .style("font-weight", "bold")
         .style("text-anchor", "middle");
 
-      group.select(".y.axis").call(yAxis);
+      group.select(".y.axis").call(yAxis[site.key]);
       if(i == 0) group.select(".x.axis").call(xAxis);
       group.select(".x.axis").attr("transform", "translate(0,"+(g.rangeBand()+20)+")");
 
@@ -128,7 +131,7 @@
         .attr("class", "point");
 
       points.attr("cx", function(d) { return x(d.yield) })
-        .attr("cy", function(d) { return y(d.variety) })
+        .attr("cy", function(d) { return y[site.key](d.variety) })
         .attr("r", 4)
         .style("fill", "transparent")
         .style("stroke", function(d) { return c(d.year) })

@@ -59,6 +59,7 @@
           .attr("height", height);
 
       svg.append("rect")
+          .classed("background", true)
           .attr("width", width)
           .attr("height", height)
           .style("fill", "transparent");
@@ -76,6 +77,8 @@
         .style("stroke-opacity", 0.125);
 
       circles();
+
+      benchmarks.init(".background");
     }
 
     function zoomed() {

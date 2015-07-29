@@ -59,7 +59,7 @@ var client = require('webdriverio')
   .url('http://localhost:8080/'+args._[0]+'?'+params)
   .timeoutsAsyncScript(3000000)
   .executeAsync(function(args, results, done) {
-    benchmark(results, done);
+    run(results, done);
   }, args, results)
     .then(function(ret)  { 
       saveResults(name, ret.value); 

@@ -20,6 +20,7 @@
       "padding": {"left": 43, "top": 12, "right": 8, "bottom": 47},
 
       "signals": [
+        {"name": "startDate"}, {"name": "endDate"}, // Injected at runtime
         {
           "name": "brush_start",
           "streams": [{
@@ -39,12 +40,12 @@
         {
           "name": "min_date", 
           "init": {"expr": "datetime('Jan 1 2000')"},
-          "expr": "time(brush_start) === time(brush_end) ? datetime('Jan 1 2000') : min(brush_start, brush_end)"
+          "expr": "time(brush_start) === time(brush_end) ? startDate : min(brush_start, brush_end)"
         },
         {
           "name": "max_date", 
           "init": {"expr": "datetime('Mar 1 2010')"},
-          "expr": "time(brush_start) === time(brush_end) ? datetime('Mar 1 2010') : max(brush_start, brush_end)"
+          "expr": "time(brush_start) === time(brush_end) ? endDate : max(brush_start, brush_end)"
         }
       ],
 
@@ -179,7 +180,10 @@
     var gen  = generators.sp500,
         vals = [],
         view = null,
-        data = null;
+        data = null,
+        raw = gen(),
+        minDate = raw[0].date,
+        maxDate = raw[raw.length-1].date;
 
     function init(cb) {
       vg.parse.spec(spec, function(chart) {
@@ -191,10 +195,11 @@
 
     function update() {
       if (!vals.length) {
-        var d = gen();
-        data.insert(d);
-        view.signal("min_date", d[0].date);
-        view.signal("max_date", d[d.length-1].date);
+        data.insert(raw);
+        view.signal("startDate", minDate)
+          .signal("min_date", minDate)
+          .signal("endDate", maxDate)
+          .signal("max_date", maxDate);
       }
       view.update();
       vals = data.values();

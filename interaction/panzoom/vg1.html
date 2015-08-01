@@ -5,7 +5,6 @@
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/vega1.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -14,6 +13,7 @@
   </body>
 
   <script>
+    var initDomain = [params.C/5*2, params.C/5*4];
     var spec = {
       "width": 800,
       "height": 500,
@@ -25,11 +25,11 @@
         },
         {
           "name": "xDomain",
-          "values": [params.C/5*2, params.C/5*4]
+          "values": initDomain
         },
         {
           "name": "yDomain",
-          "values": [params.C/5*2, params.C/5*4]
+          "values": initDomain
         }
       ],
 
@@ -86,9 +86,8 @@
       ]
     };
 
-    var gen  = generators.scatter,
-        view = null,
-        data = gen();
+    var view = null,
+        data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' }));
 
     function init(cb) {
       vg.parse.spec(spec, function(chart) {
@@ -107,12 +106,19 @@
     }
 
     function interactivity() {
-      view.data({ points: data }).update();
+      view.data({ 
+        points: data.map(function(d) { return (d.size = size(initDomain), d); })
+      }).update();
 
       var width  = view.width(),
           height = view.height(),
           scene  = view.model().scene().items[0],
           point, zoom, xs, ys, anchor;
+
+      function size(x) {
+        var s = 600/(x[1]-x[0]);
+        return Math.max(40, Math.min(100, s));
+      }
 
       view.on("mousedown", function(evt, item) {
         point = {x: evt.pageX, y: evt.pageY};
@@ -122,42 +128,53 @@
       });
 
       view.on("mouseup", function(evt, item) {
+        pan(evt);
         point = null;
       });
 
       view.on("mousemove", function(evt, item) {
-        if (point) {
-          var delta = {x: point.x - evt.pageX, y: evt.pageY - point.y};
-          view.data({
-            xDomain: [xs[0] + (xs[1] - xs[0])*delta.x/width, 
-              xs[1] + (xs[1] - xs[0])*delta.x/width],
-
-            yDomain: [ys[0] + (ys[1] - ys[0])*delta.y/height,
-              ys[1] + (ys[1] - ys[0])*delta.y/height]
-          }).update();
-        }
-
-        anchor = {
-          x: scene.scales.x.invert(evt.pageX - 50),
-          y: scene.scales.y.invert(evt.pageY - 50)
-        };
+        pan(evt);
       });
 
       view.on("wheel", function(evt, item) {
-        zoom = Math.pow(1.001, evt.deltaY);
+        zoom = Math.pow(1.001, evt.deltaY || evt.detail);
         xs = scene.scales.x.domain();
         ys = scene.scales.y.domain();
 
-        view.data({
-          xDomain: [(xs[0]-anchor.x)*zoom + anchor.x,
-            (xs[1]-anchor.x)*zoom + anchor.x],
+        anchor = {
+          x: scene.scales.x.invert(460 - 50),
+          y: scene.scales.y.invert(310 - 50)
+        };
 
-          yDomain: [(ys[0]-anchor.y)*zoom + anchor.y,
-            (ys[1]-anchor.y)*zoom + anchor.y]
+        var xDomain = [(xs[0]-anchor.x)*zoom + anchor.x,
+              (xs[1]-anchor.x)*zoom + anchor.x],
+            yDomain = [(ys[0]-anchor.y)*zoom + anchor.y,
+              (ys[1]-anchor.y)*zoom + anchor.y];
+
+        view.data({
+          xDomain: xDomain,
+          yDomain: yDomain,
+          points: data.map(function(d) { return (d.size = size(xDomain), d); })
         }).update();
 
         evt.preventDefault();
       });
+
+      function pan(evt) {
+        if (point) {
+          var delta = {x: point.x - evt.pageX, y: evt.pageY - point.y},
+              xDomain = [xs[0] + (xs[1] - xs[0])*delta.x/width, 
+                xs[1] + (xs[1] - xs[0])*delta.x/width],
+              yDomain = [ys[0] + (ys[1] - ys[0])*delta.y/height,
+                ys[1] + (ys[1] - ys[0])*delta.y/height];
+
+          view.data({
+            xDomain: xDomain,
+            yDomain: yDomain,
+            points: data.map(function(d) { return (d.size = size(xDomain), d); })
+          }).update();
+        }
+      }
     }
   </script>
 </html>

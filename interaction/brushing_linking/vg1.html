@@ -90,15 +90,16 @@
           ],
           "marks": [
             {
-              "type": "symbol",
+              "type": "rect",
               "from": {"data": "iris"},
               "properties": {
                 "enter": {
-                  "x": {"scale": "x", "field": {"group": "a.data"}},
-                  "y": {"scale": "y", "field": {"group": "b.data"}},
+                  "xc": {"scale": "x", "field": {"group": "a.data"}},
+                  "yc": {"scale": "y", "field": {"group": "b.data"}},
                   "fill": {"scale": "c", "field": "data.c"},
                   "fillOpacity": {"value": 0.5},
-                  "size": {"value": 36}
+                  "width": {"value": 7},
+                  "height": {"value": 7}
                 },
                 "update": {
                   "fill": {"field": "data.color"}
@@ -111,26 +112,27 @@
           "type": "rect",
           "from": {"data": "brush"},
           "properties": {
+            "enter": {
+              "fill": {"value": "#333"},
+              "fillOpacity": {"value": 0.2},
+              "stroke": {"value": "white"},
+              "strokeOpacity": {"value": 0.5}
+            },
             "update": {
               "y": {"field": "data.ymin"},
               "y2": {"field": "data.ymax"},
               "x": {"field": "data.xmin"},
-              "x2": {"field": "data.xmax"},
-              "fill": {"value": "#333"},
-              "fillOpacity": {"value":0.2},
-              "stroke": {"value":"white"},
-              "strokeOpacity": {"value":0.5}
+              "x2": {"field": "data.xmax"}
             }
           }
         }
       ]
     };
 
-    var gen  = generators.splom,
-        view = null,
-        data = gen();
+    var view = null,
+        data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' }));
 
-    spec.data[1].values = gen.dims;
+    spec.data[1].values = dimensions(data);
     function init(cb) {
       vg.parse.spec(spec, function(chart) {
         view = chart({ el: '#vis', renderer: params.renderer });
@@ -157,11 +159,8 @@
           xStart, xEnd, yStart, yEnd;
 
       view.on("mousedown", function(evt, item) {
-        if (item.mark.marktype === "symbol") {
-          cell = item.mark.group;
-        } else if (item.mark.marktype === "group" && item.mark.def.name === "cell") {
-          cell = item;
-        }
+        cell = (item.mark.marktype === "group" && item.mark.def.name === "cell") ?
+          item : item.mark.group;
 
         xStart = xEnd = evt.pageX - pad.left - 5;
         yStart = yEnd = evt.pageY - pad.top - 5;

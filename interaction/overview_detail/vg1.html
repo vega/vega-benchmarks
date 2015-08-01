@@ -5,7 +5,6 @@
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/vega1.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -150,7 +149,7 @@
 
     var gen  = generators.sp500,
         view = null,
-        data = gen();
+        data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' }));
 
     function init(cb) {
       vg.parse.spec(spec, function(chart) {

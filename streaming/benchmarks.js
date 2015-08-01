@@ -1,8 +1,11 @@
 var benchmarks = (function() {
+  var delta = JSON.parse(dl.load({ url: 'data/delta.json' })),
+      ids   = JSON.parse(dl.load({ url: 'data/delta_ids.json' }));
+
   function getProp(data) {
     var prop = null;
     Object.keys(data[0]).some(function(p) {
-      return dl.isNumber(data[0][p]) && (prop = p);
+      return data[0][p] && dl.isNumber(data[0][p]) && (prop = p);
     });
     return prop;
   };
@@ -11,7 +14,7 @@ var benchmarks = (function() {
     // True streaming operations
     return {
       insert: function() {
-        data.insert(gen(params.N*params.P));
+        data.insert(delta.splice(0, params.N*params.P));
       },
 
       update: function() {
@@ -20,7 +23,7 @@ var benchmarks = (function() {
             where = function(d) { return d._id in mod; };
 
         while (Object.keys(mod).length < len) {
-          mod[vals[~~(Math.random() * vals.length)]._id] = gen(1)[0];
+          mod[vals[ids.pop()]._id] = delta.pop();
         }
 
         var prop = getProp(vals);
@@ -29,10 +32,13 @@ var benchmarks = (function() {
       
       remove: function() {
         var rem = {},
-            len = params.N*params.P;
+            len = params.N*params.P,
+            id  = 0;
 
         while (Object.keys(rem).length < len) {
-          rem[vals[~~(Math.random() * vals.length)]._id] = 1;
+          id = ids.pop();
+          if (!id || id >= vals.length) id = vals.length - 1;
+          rem[vals[id]._id] = 1;
         }
 
         data.remove(function(d) { return d._id in rem; });
@@ -44,19 +50,21 @@ var benchmarks = (function() {
     // D3 and Vg1 use batch streaming
     return {
       insert: function() {
-        data = data.concat(gen(params.N*params.P));
+        data = data.concat(delta.splice(0, params.N*params.P));
       },
 
       update: function() {
         var prop = getProp(data);
         for (var i = 0; i < params.N*params.P; ++i) {
-          data[~~(Math.random() * data.length)][prop] = gen(1)[0][prop];
+          data[ids.pop()][prop] = delta.pop()[prop];
         }
       },
       
       remove: function() {
-        for (var i = 0; i < params.N*params.P; ++i) {
-          data.splice(~~(Math.random() * data.length), 1);
+        for (var i = 0, id; i < params.N*params.P; ++i) {
+          id = ids.pop();
+          if (!id || id >= data.length) id = data.length - 1;
+          data.splice(id, 1);
         }
       },
 

@@ -1,10 +1,9 @@
 <html>
   <head>
     <title>D3 Panzoom Benchmark</title>
-    <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -17,10 +16,9 @@
         height  = 500,
         padding = 50,
         x, y, xAxis, yAxis, 
-        svg, zoom;
+        svg, zoom, d3zoom;
 
-    var gen = generators.scatter,
-        data = gen();
+    var data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' }));
 
     function init(cb) {
       x = d3.scale.linear().range([0, width]);
@@ -78,7 +76,18 @@
 
       circles();
 
-      benchmarks.init(".background");
+      // Override D3 zoom handler to look for SVGZoomEvent since 
+      // we can't seem to dispatch WheelEvents. Hardwire the anchor
+      // to be the center (30, 30).
+      d3zoom = svg.on("wheel.zoom");
+      svg.on("wheel.zoom", function() {
+        var evt = d3.event,
+            delta = evt.deltaY || evt.detail;
+        d3.event = new WheelEvent("wheel", { deltaX: delta, deltaY: delta, clientX: 460, clientY: 310, pageX: 460, pageY: 310 });
+        d3zoom.call(this);
+      });
+
+      benchmarks.init("rect");
     }
 
     function zoomed() {

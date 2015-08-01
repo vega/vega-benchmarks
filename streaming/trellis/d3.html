@@ -4,7 +4,6 @@
     <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -22,8 +21,7 @@
         variety, site, siteData,
         svg;
 
-    var gen = generators.trellis,
-        data = gen();
+    var data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' }));
 
     function init(cb) {
       g = d3.scale.ordinal();

@@ -15,6 +15,7 @@ if (!window.params) {
   params.P = +params.P || 0.01; // % of data tuples to stream.
   params.R = +params.R || 1;    // Number of repetitions to perform.
   params.benchmark = params.benchmark || null; // Benchmark operation.
+  params.generate_interactions = params.generate_interactions || false; // Generate new interactions?
   params.lib = lib;
   params.renderer = lib === "d3" ? "svg" : (params.renderer || "canvas");
 }
@@ -27,10 +28,17 @@ window.onload = function() {
   if (!params.benchmark) init(function() { update(); });
 };
 
+// Get dimensions from data
+function dimensions(data) {
+  return dl.keys(data[0]).reduce(function(acc, k) { 
+    if (k.match(/^d/)) acc.push(k);
+    return acc;
+  }, []);
+}
+
 var run = (function() {
   var lib = params.lib,
       op  = params.benchmark,
-      R = params.R,
       s = 0,
       t = null;
 
@@ -106,7 +114,7 @@ var run = (function() {
             }
           }
           ++s;
-        } else if (s <= R+1) {
+        } else if (s <= params.R+1) {
           if (t) log(results, op, t);
           if (benchmarks.rerender) {
             // For benchmark suites that require re-rendering, we measure

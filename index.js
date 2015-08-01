@@ -11,7 +11,8 @@ function getResults(name) {
 }
 
 function saveResults(name, results) {
-  fs.writeFileSync('results/raw/'+name+'.json', JSON.stringify(results, null, 2));
+  var stored = getResults(name);
+  fs.writeFileSync('results/raw/'+name+'.json', JSON.stringify(stored.concat(results), null, 2));
 }
 
 var args = require('yargs')
@@ -37,7 +38,7 @@ var server = require('node-http-server')
   .deploy();
 
 var name = args._[0].replace(/\//g, '-').replace(/-(d3|vg1|vg2).html/, ''),
-    results = getResults(name),
+    results = [],
     params = JSON.parse(JSON.stringify(args));
 
 // Clean up yargs and make them URL params.

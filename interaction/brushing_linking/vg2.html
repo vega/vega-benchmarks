@@ -33,6 +33,20 @@
           ]
         },
         {
+          "name": "ex",
+          "streams": [{
+            "type": "@cell:mousedown, @point:mousedown", 
+            "expr": "eventX(cell)"            
+          }]
+        },
+        {
+          "name": "ey",
+          "streams": [{
+            "type": "@cell:mousedown, @point:mousedown", 
+            "expr": "eventY(cell)"            
+          }]
+        },
+        {
           "name": "start",
           "init": {"x": 0, "y": 0},
           "streams": [{
@@ -154,15 +168,16 @@
           "marks": [
             {
               "name": "point",
-              "type": "symbol",
+              "type": "rect",
               "from": {"data": "iris"},
               "properties": {
                 "enter": {
-                  "x": {"scale": "x", "field": {"datum": {"parent": "a.data"}}},
-                  "y": {"scale": "y", "field": {"datum": {"parent": "b.data"}}},
+                  "xc": {"scale": "x", "field": {"datum": {"parent": "a.data"}}},
+                  "yc": {"scale": "y", "field": {"datum": {"parent": "b.data"}}},
                   "fill": {"scale": "c", "field": "c"},
                   "fillOpacity": {"value": 0.5},
-                  "size": {"value": 36}
+                  "width": {"value": 7},
+                  "height": {"value": 7}
                 },
                 "update": {
                   "fill": {
@@ -190,8 +205,10 @@
           "type": "rect",
           "properties": {
             "enter": {
-              "fill": {"value": "grey"},
-              "fillOpacity": {"value": 0.2}
+              "fill": {"value": "#333"},
+              "fillOpacity": {"value": 0.2},
+              "stroke": {"value": "white"},
+              "strokeOpacity": {"value": 0.5}
             },
             "update": {
               "x":  {"signal": "brush.x1"},
@@ -204,12 +221,12 @@
       ]
     };
 
-    var gen  = generators.splom,
+    var gen = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' })),
         vals = [],
         view = null,
         data = null;
 
-    spec.data[1].values = gen.dims;
+    spec.data[1].values = dimensions(gen);
     function init(cb) {
       vg.parse.spec(spec, function(chart) {
         view = chart({ el: '#vis', renderer: params.renderer });
@@ -219,7 +236,7 @@
     }
 
     function update() {
-      if (!vals.length) data.insert(gen());
+      if (!vals.length) data.insert(gen);
       view.update();
       vals = data.values();
 

@@ -4,7 +4,6 @@
     <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -22,8 +21,7 @@
         cAcc, cScale,
         svg, dot;
 
-    var gen = generators.scatter,
-        data = gen();
+    var data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' }));
 
     function init(cb) {
       xAcc   = function(d) { return d.x };
@@ -68,12 +66,13 @@
       dot = svg.selectAll(".dot")
           .data(data);
 
-      dot.enter().append("circle")
+      dot.enter().append("rect")
           .attr("class", "dot");
 
-      dot.attr("r", 3.5)
-        .attr("cx", function(d) { return xScale(xAcc(d)) })
-        .attr("cy", function(d) { return yScale(yAcc(d)) })
+      dot.attr("x", function(d) { return xScale(xAcc(d)) })
+        .attr("y", function(d) { return yScale(yAcc(d)) })
+        .attr("width", 7)
+        .attr("height", 7)
         .style("fill", function(d) { return cScale(cAcc(d)) })
         .style("opacity", 0.5);
 

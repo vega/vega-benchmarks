@@ -4,7 +4,6 @@
     <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -22,9 +21,8 @@
         variety, site, siteData,
         svg, brush;
 
-    var gen = generators.splom,
-        data = gen(),
-        traits = gen.dims,
+    var data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' })),
+        traits = dimensions(data),
         n = traits.length,
         domainByTrait = {};
 
@@ -100,14 +98,17 @@
           .style("stroke", "black")
           .style("stroke-opacity", 0.25);
 
-      var circle = cell.selectAll("circle")
+      var point = cell.selectAll(".point")
           .data(data);
 
-      circle.enter()
-        .append("circle")
-          .attr("cx", function(d) { return x(d[p.x]); })
-          .attr("cy", function(d) { return y(d[p.y]); })
-          .attr("r", 3)
+      point.enter()
+        .append("rect")
+          .classed("point", true);
+
+      point.attr("x", function(d) { return x(d[p.x]); })
+          .attr("y", function(d) { return y(d[p.y]); })
+          .attr("width", 7)
+          .attr("height", 7)
           .style("fill-opacity", 0.7)
           .style("fill", function(d) { return c(d.c); });
     }
@@ -132,7 +133,7 @@
     // Highlight the selected circles.
     function brushmove(p) {
       var e = brush.extent();
-      svg.selectAll("circle").style("fill", function(d) {
+      svg.selectAll(".point").style("fill", function(d) {
         var hidden = e[0][0] > d[p.x] || d[p.x] > e[1][0]
             || e[0][1] > d[p.y] || d[p.y] > e[1][1];
         return hidden ? "grey" : c(d.c);

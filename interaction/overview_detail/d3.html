@@ -4,7 +4,6 @@
     <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -24,8 +23,7 @@
         area, area2, parseDate, brush,
         svg, focus, context;
 
-    var gen  = generators.sp500,
-        data = gen();
+    var data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' }));
 
     function init(cb) {
       x  = d3.time.scale().range([0, width]);

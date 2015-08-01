@@ -5,7 +5,6 @@
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/vega2.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -175,11 +174,10 @@
       ]
     };
 
-    var gen  = generators.sp500,
-        vals = [],
+    var vals = [],
         view = null,
         data = null,
-        raw = gen(),
+        raw = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' })),
         minDate = raw[0].date,
         maxDate = raw[raw.length-1].date;
 

@@ -4,7 +4,6 @@
     <script type="text/javascript" src="/lib/d3.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/lib/datalib.min.js" charset="utf8"></script>
     <script type="text/javascript" src="/scripts/runner.js" charset="utf8"></script>
-    <script type="text/javascript" src="/scripts/generators.js" charset="utf8"></script>
     <script type="text/javascript" src="../benchmarks.js" charset="utf8"></script>
     <link rel="stylesheet" type="text/css" href="/lib/styles.css" />
   </head>
@@ -20,9 +19,8 @@
     var x, y, line, axes, 
         svg;
 
-    var gen = generators.parallel_coords,
-        data = gen(),
-        dimensions = gen.dims;
+    var data = JSON.parse(dl.load({ url: 'data/'+params.N+'.json' })),
+        dimensions = dimensions(data);
 
     // Returns the path for a given data point.
     function path(d) {

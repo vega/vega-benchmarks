@@ -1,0 +1,74 @@
+{
+  "width": 400,
+  "height": 150,
+
+  "data": [
+    {
+      "name": "table",
+      "url": "data/results/summary/interaction-brushing_linking.json",
+      "transform": [
+        {"type": "filter", "test": "datum.op === 'brush'"}
+      ]
+    }
+  ],
+
+  "scales": [
+    {
+      "name": "x",
+      "type": "log",
+      "range": "width",
+      "domain": {"data": "table", "field": "N"}
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "range": "height",
+      "domain": [0, 60]
+    },
+    {
+      "name": "c",
+      "type": "ordinal",
+      "domain": ["d3|svg", "vg2|svg", "vg2|canvas", "vg1|svg", "vg1|canvas"],
+      "range": ["#5752C7", "#7A953C", "#A7C952", "#E2AF38", "#E1C27E"]
+    }
+  ],
+
+  "legends": [{"fill": "c"}],
+  "axes": [
+    {"type": "x", "scale": "x"},
+    {"type": "y", "scale": "y", "grid": true, "layer": "back",
+      "properties": {
+        "grid": {
+          "stroke": {"value": "#aaa"}
+        }
+      }
+    }
+  ],
+
+  "marks": [
+    {
+      "type": "group",
+      "from": {
+        "data": "table",
+        "transform": [
+          {"type": "facet", "groupby": ["lib", "renderer"]}
+        ]
+      },
+
+      "marks": [
+        {
+          "type": "line",
+          "properties": {
+            "update": {
+              "x": {"scale": "x", "field": "N"},
+              "y": {"scale": "y", "field": "fps"},
+              "stroke": {"scale": "c", "field": {"parent": "key"}},
+              "strokeWidth": {"value": 3}
+            }
+          }
+        }
+
+      ]
+    }
+  ]
+}

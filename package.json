@@ -20,6 +20,6 @@
     "yargs": "^3.15.0"
   },
   "scripts": {
-    "start": "java -jar ./node_modules/selenium-server-standalone-jar/jar/selenium-server-standalone-2.45.0.jar -Dwebdriver.chrome.driver=\"node_modules/chromedriver/bin/chromedriver\""
+    "start": "java -jar ./node_modules/selenium-server-standalone-jar/jar/selenium-server-standalone-`npm list | sed -n -e 's/^.*selenium-server-standalone-jar@//p'`.jar -Dwebdriver.chrome.driver=\"node_modules/chromedriver/bin/chromedriver\""
   }
 }
